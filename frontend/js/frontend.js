@@ -89,6 +89,73 @@ async function cadastrarUsuario() {
     }
 }
 
+async function logarUsuario() {
+    let usuarioLoginInput = document.getElementById("userLoginInput");
+    let senhaLoginInput = document.getElementById("passLoginInput");
+    let usuarioLogin = usuarioLoginInput.value;
+    let senhaLogin = senhaLoginInput.value;
+    if (usuarioLogin && senhaLogin) {
+        try {
+            const usuarioEndpoint = "/auth/login";
+            const URLcompleta = `${protocol}${baseURL}${usuarioEndpoint}`;
+            const dados = {
+                login: usuarioLogin,
+                password: senhaLogin,
+            };
+            const response = (await axios.post(URLcompleta, dados)).data;
+            localStorage.setItem("token", response.token);
+            usuarioLoginInput.value = "";
+            senhaLoginInput.value = "";
+            exibirAlerta(
+                ".alert-login",
+                "Login realizado!",
+                ["show", "alert-success"],
+                ["d-none"],
+                2000
+            );
+            esconderModal("#modalLogin", 2000);
+            usuarioLoginInput.value = "";
+            senhaLoginInput.value = "";
+            atualizaEstadoLogin();
+        } catch (error) {
+            console.error(error);
+            exibirAlerta(
+                ".alert",
+                "Usuário ou senha inválidos",
+                ["show", "alert-danger"],
+                ["d-none"],
+                2000
+            );
+            esconderModal("#modalLogin", 2000);
+            usuarioLoginInput.value = "";
+            senhaLoginInput.value = "";
+        }
+    } else {
+        exibirAlerta(
+            ".alert",
+            "Preencha todos os campos!",
+            ["show", "alert-danger"],
+            ["d-none"],
+            2000
+        );
+    }
+}
+
+function deslogarUsuario() {
+    localStorage.removeItem("token");
+    atualizaEstadoLogin();
+}
+
+function loginOuLogout() {
+    const textoLink = document.getElementById("anchorLogin");
+    if (textoLink.innerHTML === "Login") {
+        const modal = new bootstrap.Modal("#modalLogin");
+        modal.show();
+    } else {
+        deslogarUsuario();
+    }
+}
+
 function exibirAlerta(seletor, texto, classesAdd, classesRemove, timer) {
     let alert = document.querySelector(seletor);
     alert.innerHTML = texto;
@@ -112,7 +179,7 @@ function esconderModal(seletor, timer) {
 function exibirTabela(seletor, itens) {
     let tabela = document.querySelector(seletor);
     let corpo = tabela.getElementsByTagName("tbody")[0];
-    corpo.innerHTML=""
+    corpo.innerHTML = "";
     itens.forEach((item) => {
         let linhaNova = corpo.insertRow(0);
         let celulaTitulo = linhaNova.insertCell(0);
@@ -120,4 +187,17 @@ function exibirTabela(seletor, itens) {
         celulaTitulo.innerHTML = item.titulo;
         celulaSinopse.innerHTML = item.sinopse;
     });
+}
+
+function atualizaEstadoLogin() {
+    const token = localStorage.getItem("token");
+    const btnCadastrarFilme = document.getElementById("btn-cadastrar-filme");
+    const anchorLogin = document.getElementById("anchorLogin");
+    if (token) {
+        anchorLogin.innerHTML = "Logout";
+        btnCadastrarFilme.disabled = false;
+    } else {
+        anchorLogin.innerHTML = "Login";
+        btnCadastrarFilme.disabled = true;
+    }
 }
